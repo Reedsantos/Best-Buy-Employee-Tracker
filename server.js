@@ -7,7 +7,7 @@ const connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "!Rantos69",
+    password: "admin",
     database: "employeesdb"
 });
 
@@ -52,17 +52,22 @@ function startPrompt() {
                 "Remove Department"]
         })
 
-.then(answer => {
-    switch (answer.promptChoice) {
-        case "View Employees":
-            viewEmployees();
-            break;
+        .then(answer => {
+            switch (answer.promptChoice) {
+                case "View Employees":
+                    viewEmployees();
+                    break;
 
-        case "Sort Employees by Manager":
-            sortManagers();
-            break;
-    
-    }})
+                case "Sort Employees by Manager":
+                    sortManagers();
+                    break;
+
+                case "Show Roles":
+                    viewRoles();
+                    break;
+
+            }
+        })
 };
 
 function viewEmployees() {
@@ -142,5 +147,20 @@ function querymanagers(manager) {
             });
         }
         renderScreen(`These employees are managed by ${manager}`, tableData);
+    });
+}
+
+function viewRoles() {
+    const query = `SELECT id, title FROM employeesdb.role;`;
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        const tableData = [];
+        for (let i = 0; i < res.length; i++) {
+            tableData.push({
+                "ID": res[i].id,
+                "Roles": res[i].title
+            });
+        }
+        renderScreen("All Roles", tableData);
     });
 }
