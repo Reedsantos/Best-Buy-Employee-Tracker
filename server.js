@@ -7,7 +7,7 @@ const connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "admin",
+    password: "!Rantos69",
     database: "employeesdb"
 });
 
@@ -182,4 +182,31 @@ function viewDepartments() {
         }
         renderScreen(`All Departments`, tableData);
     });
+}
+
+function addEmployee() {
+    const newEmployee = {
+        firstName: "",
+        lastName: "",
+        roleID: 0,
+        managerID: 0
+    };
+    inquirer
+        .prompt([{
+            name: "firstName",
+            message: "Enter employee's first name: ",
+            validate: async (input) => {
+                return true;
+            }
+        }, {
+            name: "lastName",
+            message: "Enter employee's last name: ",
+            validate: async (input) => {
+                return true;
+            }
+        }])
+        .then(answers => {
+            newEmployee.firstName = answers.firstName;
+            newEmployee.lastName = answers.lastName;
+        })
 }
