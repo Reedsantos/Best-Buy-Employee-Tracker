@@ -51,4 +51,37 @@ function startPrompt() {
                 "Remove Role",
                 "Remove Department"]
         })
+
+.then(answer => {
+    switch (answer.promptChoice) {
+        case "View Employees":
+            viewEmployees();
+            break;
+    }})
 };
+
+function viewEmployees() {
+    const query = `
+    SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name AS department_name, concat(manager.first_name, " ", manager.last_name) AS manager_full_name
+    FROM employee 
+    LEFT JOIN role ON employee.role_id = role.id
+    LEFT JOIN department ON department.id = role.department_id
+	LEFT JOIN employee as manager ON employee.manager_id = manager.id;`;
+
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        const tableData = [];
+        for (let i = 0; i < res.length; i++) {
+            tableData.push({
+                "ID": res[i].id,
+                "First Name": res[i].first_name,
+                "Last Name": res[i].last_name,
+                "Role": res[i].title,
+                "Salary": res[i].salary,
+                "Department": res[i].department_name,
+                "Manager": res[i].manager_full_name
+            });
+        }
+        renderScreen("All Employees", tableData);
+    });
+}
