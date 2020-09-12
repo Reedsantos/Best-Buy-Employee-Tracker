@@ -90,6 +90,7 @@ function viewEmployees() {
         renderScreen("All Employees", tableData);
     });
 }
+
 function sortManagers() {
     const query = `
     SELECT DISTINCT concat(manager.first_name, " ", manager.last_name) AS full_name
@@ -116,4 +117,30 @@ function promptManagers(managers) {
         .then(answer => {
             querymanagers(answer.promptChoice);
         });
-};
+}
+
+function querymanagers(manager) {
+    const query = `
+    SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name AS department_name, concat(manager.first_name, " ", manager.last_name) AS manager_full_name 
+    FROM employee 
+    INNER JOIN role ON employee.role_id = role.id
+    INNER JOIN employee AS manager ON employee.manager_id = manager.id
+    INNER JOIN department ON department.id = role.department_id
+    WHERE concat(manager.first_name, " ", manager.last_name) = "${manager}";`;
+
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        const tableData = [];
+        for (let i = 0; i < res.length; i++) {
+            tableData.push({
+                "ID": res[i].id,
+                "First Name": res[i].first_name,
+                "Last Name": res[i].last_name,
+                "Role": res[i].title,
+                "Salary": res[i].salary,
+                "Department": res[i].department_name
+            });
+        }
+        renderScreen(`These employees are managed by ${manager}`, tableData);
+    });
+}
