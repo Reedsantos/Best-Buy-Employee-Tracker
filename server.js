@@ -66,6 +66,10 @@ function startPrompt() {
                     viewRoles();
                     break;
 
+                case "Show Departments":
+                    viewDepartments();
+                    break;
+
             }
         })
 };
@@ -162,5 +166,20 @@ function viewRoles() {
             });
         }
         renderScreen("All Roles", tableData);
+    });
+}
+
+function viewDepartments() {
+    const query = `SELECT id, department.name FROM department;`;
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        const tableData = [];
+        for (let i = 0; i < res.length; i++) {
+            tableData.push({
+                "ID": res[i].id,
+                "Departments": res[i].name
+            });
+        }
+        renderScreen(`All Departments`, tableData);
     });
 }
