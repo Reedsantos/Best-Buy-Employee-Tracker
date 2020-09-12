@@ -7,7 +7,7 @@ const connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
-    password: "admin",
+    password: "!Rantos69",
     database: "employeesdb"
 });
 
@@ -57,6 +57,11 @@ function startPrompt() {
         case "View Employees":
             viewEmployees();
             break;
+
+        case "Sort Employees by Manager":
+            sortManagers();
+            break;
+    
     }})
 };
 
@@ -85,3 +90,30 @@ function viewEmployees() {
         renderScreen("All Employees", tableData);
     });
 }
+function sortManagers() {
+    const query = `
+    SELECT DISTINCT concat(manager.first_name, " ", manager.last_name) AS full_name
+    FROM employee
+    LEFT JOIN employee AS manager ON manager.id = employee.manager_id;`;
+
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        const managers = [];
+        for (let i = 0; i < res.length; i++) {
+            managers.push(res[i].full_name);
+        }
+        promptManagers(managers);
+    });
+}
+function promptManagers(managers) {
+    inquirer
+        .prompt({
+            type: "list",
+            name: "promptChoice",
+            message: "Select Manager:",
+            choices: managers
+        })
+        .then(answer => {
+            querymanagers(answer.promptChoice);
+        });
+};
