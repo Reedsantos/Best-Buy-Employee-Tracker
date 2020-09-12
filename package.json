@@ -1,0 +1,33 @@
+{
+  "name": "best-buy-employee-tracker",
+  "version": "1.0.0",
+  "description": "This app uses mysql to track employees, departments, roles, and salaries of a retail Best Buy store.",
+  "main": "server.js",
+  "dependencies": {
+    "console-clear": "^1.1.1",
+    "console.table": "^0.10.0",
+    "inquirer": "^7.3.3",
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Reedsantos/Best-Buy-Employee-Tracker.git"
+  },
+  "keywords": [
+    "Employee",
+    "tracker",
+    "best",
+    "buy"
+  ],
+  "author": "Reed Santos",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Reedsantos/Best-Buy-Employee-Tracker/issues"
+  },
+  "homepage": "https://github.com/Reedsantos/Best-Buy-Employee-Tracker#readme"
+}
