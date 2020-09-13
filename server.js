@@ -1,8 +1,10 @@
+// Dependencies (npm install)
 const inquirer = require("inquirer");
 const mysql = require('mysql');
 const cTable = require('console.table');
 const clear = require('console-clear');
 
+// Connection info for database 
 const connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
@@ -11,6 +13,7 @@ const connection = mysql.createConnection({
     database: "employeesdb"
 });
 
+// Connect to server and database
 connection.connect(function (err) {
     if (err) {
         console.error("error connecting: " + err.stack);
@@ -20,18 +23,22 @@ connection.connect(function (err) {
     startApp()
 });
 
+// Clears console and start prompts
 function startApp() {
     clear();
     startPrompt();
 }
 
+// Render table data and prompts
 function renderScreen(tableTitle, tableData) {
     clear();
     console.log((tableTitle));
     console.table(tableData);
+    // Begin ptompts
     startPrompt();
 }
 
+// Intro and prompts
 function startPrompt() {
     console.log("\n Welcome To The Best Buy Retail Employee Tracker! \n");
     inquirer
@@ -51,7 +58,7 @@ function startPrompt() {
                 "Remove Role",
                 "Remove Department"]
         })
-
+        // Selecting a choice will run the corresponding function
         .then(answer => {
             switch (answer.promptChoice) {
                 case "View Employees":
@@ -95,8 +102,9 @@ function startPrompt() {
                     break;
             }
         });
-};
+}
 
+// Employees query
 function viewEmployees() {
     const query = `
     SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name AS department_name, concat(manager.first_name, " ", manager.last_name) AS manager_full_name
@@ -105,6 +113,7 @@ function viewEmployees() {
     LEFT JOIN department ON department.id = role.department_id
 	LEFT JOIN employee as manager ON employee.manager_id = manager.id;`;
 
+    // Use the result of the query to create table data array
     connection.query(query, (err, res) => {
         if (err) throw err;
         const tableData = [];
@@ -119,16 +128,19 @@ function viewEmployees() {
                 "Manager": res[i].manager_full_name
             });
         }
+        // displays all employees
         renderScreen("All Employees", tableData);
     });
 }
 
+// Query Managers
 function sortManagers() {
     const query = `
     SELECT DISTINCT concat(manager.first_name, " ", manager.last_name) AS full_name
     FROM employee
     LEFT JOIN employee AS manager ON manager.id = employee.manager_id;`;
 
+    // Put all manager names in an array
     connection.query(query, (err, res) => {
         if (err) throw err;
         const managers = [];
@@ -138,6 +150,7 @@ function sortManagers() {
         promptManagers(managers);
     });
 }
+// Prompt for all managers
 function promptManagers(managers) {
     inquirer
         .prompt({
@@ -151,6 +164,7 @@ function promptManagers(managers) {
         });
 }
 
+// Query employees by manager
 function querymanagers(manager) {
     const query = `
     SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.name AS department_name, concat(manager.first_name, " ", manager.last_name) AS manager_full_name 
@@ -160,6 +174,7 @@ function querymanagers(manager) {
     INNER JOIN department ON department.id = role.department_id
     WHERE concat(manager.first_name, " ", manager.last_name) = "${manager}";`;
 
+    // Use the result of the query to create table data array
     connection.query(query, (err, res) => {
         if (err) throw err;
         const tableData = [];
@@ -173,12 +188,16 @@ function querymanagers(manager) {
                 "Department": res[i].department_name
             });
         }
+        // Displays all employees managed under the selected manager
         renderScreen(`These employees are managed by ${manager}`, tableData);
     });
 }
 
+// Query roles
 function viewRoles() {
     const query = `SELECT id, title FROM employeesdb.role;`;
+
+    // Use the result of the query to create table data array
     connection.query(query, (err, res) => {
         if (err) throw err;
         const tableData = [];
@@ -188,14 +207,18 @@ function viewRoles() {
                 "Roles": res[i].title
             });
         }
+        // Displays all roles
         renderScreen("All Roles", tableData);
     });
 }
 
+
+// Query departments
 function viewDepartments() {
     const query = `SELECT id, department.name FROM department;`;
     connection.query(query, (err, res) => {
         if (err) throw err;
+        // Add department names to array
         const tableData = [];
         for (let i = 0; i < res.length; i++) {
             tableData.push({
@@ -203,16 +226,21 @@ function viewDepartments() {
                 "Departments": res[i].name
             });
         }
+        // Show departments
         renderScreen(`All Departments`, tableData);
     });
 }
+
+// Add employee with name ID, name, role, salary, and department
 function addEmployee() {
+    // NewEmployee object that we can fill later
     const newEmployee = {
         firstName: "",
         lastName: "",
         roleID: 0,
         managerID: 0
     };
+    // Name prompt
     inquirer
         .prompt([{
             name: "firstName",
@@ -228,11 +256,14 @@ function addEmployee() {
             }
         }])
         .then(answers => {
+            // Add employee name
             newEmployee.firstName = answers.firstName;
             newEmployee.lastName = answers.lastName;
+            // Query to select role
             const query = `SELECT role.title, role.id FROM role;`;
             connection.query(query, (err, res) => {
                 if (err) throw err;
+                // Add role names and ids to arrays
                 const roles = [];
                 const rolesNames = [];
                 for (let i = 0; i < res.length; i++) {
@@ -242,6 +273,7 @@ function addEmployee() {
                     });
                     rolesNames.push(res[i].title);
                 }
+                //prompt to select role
                 inquirer
                     .prompt({
                         type: "list",
@@ -250,6 +282,7 @@ function addEmployee() {
                         choices: rolesNames
                     })
                     .then(answer => {
+                        // Add id of the role the user selected
                         const chosenRole = answer.rolePromptChoice;
                         let chosenRoleID;
                         for (let i = 0; i < roles.length; i++) {
@@ -259,12 +292,14 @@ function addEmployee() {
                         }
                         newEmployee.roleID = chosenRoleID;
 
+                        //query managers
                         const query = `
                     SELECT DISTINCT concat(manager.first_name, " ", manager.last_name) AS full_name, manager.id
                     FROM employee
                     LEFT JOIN employee AS manager ON manager.id = employee.manager_id;`;
                         connection.query(query, (err, res) => {
                             if (err) throw err;
+                            // Add manager names and ids to arrays
                             const managers = [];
                             const managersNames = [];
                             for (let i = 0; i < res.length; i++) {
@@ -274,6 +309,7 @@ function addEmployee() {
                                     fullName: res[i].full_name
                                 });
                             }
+                            //prompt to set manager
                             inquirer
                                 .prompt({
                                     type: "list",
@@ -282,6 +318,7 @@ function addEmployee() {
                                     choices: managersNames
                                 })
                                 .then(answer => {
+                                    // Sets employee manager's ID
                                     const chosenManager = answer.managerPromptChoice;
                                     let chosenManagerID;
                                     for (let i = 0; i < managers.length; i++) {
@@ -291,6 +328,7 @@ function addEmployee() {
                                         }
                                     }
                                     newEmployee.managerID = chosenManagerID;
+                                    // Add employee data from prompts to the database
                                     const query = "INSERT INTO employee SET ?";
                                     connection.query(query, {
                                         first_name: newEmployee.firstName,
@@ -307,8 +345,8 @@ function addEmployee() {
                     });
             });
         });
-};
-
+}
+// Add new department
 function addDepartment() {
     inquirer
         .prompt([
@@ -318,6 +356,7 @@ function addDepartment() {
                 message: "Enter new Department title:",
             },
         ])
+        // Add the name of the new department to database
         .then((answer) => {
             const query = `INSERT INTO department (name) VALUES (?);`;
             connection.query(query, [answer.deptName], (err, res) => {
@@ -330,21 +369,24 @@ function addDepartment() {
 
         });
 }
+// Call back function to add departments
 function departmentsCb(callback) {
     const query = `SELECT department.name FROM department;`;
     connection.query(query, (err, res) => {
         if (err) throw err;
+        // Add department names to array
         const departments = [];
         for (let i = 0; i < res.length; i++) {
             departments.push(res[i].name);
         }
         callback(departments)
     });
-};
-
+}
+// Add new Role
 function addRole() {
     const departments = [];
     const departmentsName = [];
+    // Query to add the department of the new role
     const query = `SELECT id, name FROM department`;
     connection.query(query, (err, res) => {
         if (err) throw err;
@@ -356,6 +398,7 @@ function addRole() {
             departmentsName.push(res[i].name);
         }
         inquirer
+            // Prompt user for name, salary, and department of new role
             .prompt([
                 {
                     name: "rName",
@@ -374,6 +417,7 @@ function addRole() {
                     choices: departmentsName
                 },
             ])
+            // Add new role to database
             .then((answer) => {
 
                 let deptID = departments.find((obj) => obj.name === answer.roleDept).id;
@@ -388,13 +432,14 @@ function addRole() {
             });
     });
 }
-
+// Remove an employee from the database
 function removeEmployee() {
     const query = `
     SELECT id, concat(employee.first_name, " ", employee.last_name) AS employee_full_name
     FROM employee ;`;
     connection.query(query, (err, res) => {
         if (err) throw err;
+        // Displays table of all employees
         let employees = [];
         let employeesNames = [];
         for (let i = 0; i < res.length; i++) {
@@ -404,6 +449,7 @@ function removeEmployee() {
             });
             employeesNames.push(res[i].employee_full_name);
         }
+        // Prompt user for which employee to remove
         inquirer
             .prompt({
                 type: "list",
@@ -412,6 +458,7 @@ function removeEmployee() {
                 choices: employeesNames
             })
             .then(answer => {
+                // Get id of selected employee
                 const chosenEmployee = answer.employeePromptChoice;
                 let chosenEmployeeID;
                 for (let i = 0; i < employees.length; i++) {
@@ -420,6 +467,7 @@ function removeEmployee() {
                         break;
                     }
                 }
+                // Remove employee from database and displays new table of emloyees
                 const query = "DELETE FROM employee WHERE ?";
                 connection.query(query, { id: chosenEmployeeID }, (err, res) => {
                     if (err) throw err;
@@ -430,11 +478,13 @@ function removeEmployee() {
     });
 }
 
+// Remove a role from the database
 function removeRole() {
     const query = `
     SELECT id, role.title FROM role;`
     connection.query(query, (err, res) => {
         if (err) throw err;
+        // Add all roles into array
         const roles = [];
         const rolesNames = [];
         for (let i = 0; i < res.length; i++) {
@@ -444,6 +494,7 @@ function removeRole() {
             });
             rolesNames.push(res[i].title);
         }
+        //prompt for role to remove
         inquirer
             .prompt({
                 type: "list",
@@ -452,6 +503,7 @@ function removeRole() {
                 choices: rolesNames
             })
             .then(answer => {
+                // Get ID of selected role
                 const chosenRole = answer.rolesPromptChoice;
                 let chosenRoleID;
                 for (let i = 0; i < roles.length; i++) {
@@ -460,6 +512,7 @@ function removeRole() {
                         break;
                     }
                 }
+                // Display updated table of roles
                 const query = "DELETE FROM role WHERE ?";
                 connection.query(query, { id: chosenRoleID }, (err, res) => {
                     if (err) throw err;
@@ -468,13 +521,16 @@ function removeRole() {
                 });
             });
     });
-};
+}
 
+
+// Remove department from database
 function removeDepartment() {
     const query = `
     SELECT id, department.name FROM department;`;
     connection.query(query, (err, res) => {
         if (err) throw err;
+        // Add all departments into array
         const departments = [];
         const departmentsNames = [];
         for (let i = 0; i < res.length; i++) {
@@ -484,6 +540,7 @@ function removeDepartment() {
             });
             departmentsNames.push(res[i].name);
         }
+        // Prompt user which department to remove
         inquirer
             .prompt({
                 type: "list",
@@ -492,6 +549,7 @@ function removeDepartment() {
                 choices: departmentsNames
             })
             .then(answer => {
+                // Get id of selected department
                 const chosenDepartment = answer.departmentsPromptChoice;
                 let chosenDepartmentId;
                 for (let i = 0; i < departments.length; i++) {
@@ -500,6 +558,7 @@ function removeDepartment() {
                         break;
                     }
                 }
+                // Show updated table of departments
                 const query = "DELETE FROM department WHERE ?";
                 connection.query(query, { id: chosenDepartmentId }, (err, res) => {
                     if (err) throw err;
