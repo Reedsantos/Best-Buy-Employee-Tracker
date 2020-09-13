@@ -82,6 +82,9 @@ function startPrompt() {
                     addDepartment();
                     break;
 
+                case "Remove Employee":
+                    removeEmployee();
+                    break;
 
             }
         })
@@ -375,6 +378,47 @@ function addRole() {
                         viewRoles();
                     });
 
+            });
+    });
+}
+
+function removeEmployee() {
+    const query = `
+    SELECT id, concat(employee.first_name, " ", employee.last_name) AS employee_full_name
+    FROM employee ;`;
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        let employees = [];
+        let employeesNames = [];
+        for (let i = 0; i < res.length; i++) {
+            employees.push({
+                id: res[i].id,
+                fullName: res[i].employee_full_name
+            });
+            employeesNames.push(res[i].employee_full_name);
+        }
+        inquirer
+            .prompt({
+                type: "list",
+                name: "employeePromptChoice",
+                message: "Select employee to delete:",
+                choices: employeesNames
+            })
+            .then(answer => {
+                const chosenEmployee = answer.employeePromptChoice;
+                let chosenEmployeeID;
+                for (let i = 0; i < employees.length; i++) {
+                    if (employees[i].fullName === chosenEmployee) {
+                        chosenEmployeeID = employees[i].id;
+                        break;
+                    }
+                }
+                const query = "DELETE FROM employee WHERE ?";
+                connection.query(query, { id: chosenEmployeeID }, (err, res) => {
+                    if (err) throw err;
+                    console.log("Employee Removed");
+                    setTimeout(viewEmployees, 500);
+                });
             });
     });
 }
