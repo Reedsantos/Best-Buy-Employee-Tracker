@@ -86,6 +86,9 @@ function startPrompt() {
                     removeEmployee();
                     break;
 
+                case "Remove Role":
+                    removeRole();
+                    break;
             }
         })
 };
@@ -418,6 +421,46 @@ function removeEmployee() {
                     if (err) throw err;
                     console.log("Employee Removed");
                     setTimeout(viewEmployees, 500);
+                });
+            });
+    });
+}
+
+function removeRole() {
+    const query = `
+    SELECT id, role.title FROM role;`
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        const roles = [];
+        const rolesNames = [];
+        for (let i = 0; i < res.length; i++) {
+            roles.push({
+                id: res[i].id,
+                title: res[i].title
+            });
+            rolesNames.push(res[i].title);
+        }
+        inquirer
+            .prompt({
+                type: "list",
+                name: "rolesPromptChoice",
+                message: "Select Role to delete",
+                choices: rolesNames
+            })
+            .then(answer => {
+                const chosenRole = answer.rolesPromptChoice;
+                let chosenRoleID;
+                for (let i = 0; i < roles.length; i++) {
+                    if (roles[i].title === chosenRole) {
+                        chosenRoleID = roles[i].id;
+                        break;
+                    }
+                }
+                const query = "DELETE FROM role WHERE ?";
+                connection.query(query, { id: chosenRoleID }, (err, res) => {
+                    if (err) throw err;
+                    console.log("Role Removed");
+                    setTimeout(viewRoles, 500);
                 });
             });
     });
