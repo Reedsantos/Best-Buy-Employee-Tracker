@@ -74,9 +74,14 @@ function startPrompt() {
                     addEmployee();
                     break;
 
+                case "Add Role":
+                    addRole();
+                    break;
+
                 case "Add Departments":
                     addDepartment();
                     break;
+
 
             }
         })
@@ -324,5 +329,52 @@ function departmentsCb(callback) {
             departments.push(res[i].name);
         }
         callback(departments)
+    });
+};
+
+function addRole() {
+    const departments = [];
+    const departmentsName = [];
+    const query = `SELECT id, name FROM department`;
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        for (let i = 0; i < res.length; i++) {
+            departments.push({
+                id: res[i].id,
+                name: res[i].name
+            });
+            departmentsName.push(res[i].name);
+        }
+        inquirer
+            .prompt([
+                {
+                    name: "rName",
+                    type: "input",
+                    message: "Enter new role title:",
+                },
+                {
+                    name: "salNum",
+                    type: "input",
+                    message: "Enter role salary:",
+                },
+                {
+                    type: "list",
+                    name: "roleDept",
+                    message: "Select department:",
+                    choices: departmentsName
+                },
+            ])
+            .then((answer) => {
+
+                let deptID = departments.find((obj) => obj.name === answer.roleDept).id;
+                connection.query("INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)",
+                    [answer.rName, answer.salNum, deptID], (err, res) => {
+                        if (err) throw err;
+                        console.log(
+                            `${answer.rName} was added to the ${answer.roleDept} department.`);
+                        viewRoles();
+                    });
+
+            });
     });
 }
