@@ -1,5 +1,6 @@
 # Best-Buy-Employee-Tracker <img src='https://img.shields.io/badge/License-MIT-black' alt='github badge'>
 ![Screenshot](screenshot.png)
+</br>[Link to Demo](https://drive.google.com/file/d/14HCkNdlIsyCXU2x3Npxy94ZnqADlVuR_/view)
 ## Description
 This application uses MySQL to control departments, roles, and employees. Although I created this app to manage a Best Buy retail store where I work currently, by changing the seeds.sql queries or through the interface the user can delete my seed and add departments, roles, and employees for their buisness instead.
 ### Table of Contents
