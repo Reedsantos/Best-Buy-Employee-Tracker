@@ -89,8 +89,12 @@ function startPrompt() {
                 case "Remove Role":
                     removeRole();
                     break;
+
+                case "Remove Department":
+                    removeDepartment();
+                    break;
             }
-        })
+        });
 };
 
 function viewEmployees() {
@@ -464,4 +468,45 @@ function removeRole() {
                 });
             });
     });
-}
+};
+
+function removeDepartment() {
+    const query = `
+    SELECT id, department.name FROM department;`;
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        const departments = [];
+        const departmentsNames = [];
+        for (let i = 0; i < res.length; i++) {
+            departments.push({
+                id: res[i].id,
+                name: res[i].name
+            });
+            departmentsNames.push(res[i].name);
+        }
+        inquirer
+            .prompt({
+                type: "list",
+                name: "departmentsPromptChoice",
+                message: "Select Department to delete",
+                choices: departmentsNames
+            })
+            .then(answer => {
+                const chosenDepartment = answer.departmentsPromptChoice;
+                let chosenDepartmentId;
+                for (let i = 0; i < departments.length; i++) {
+                    if (departments[i].name === chosenDepartment) {
+                        chosenDepartmentId = departments[i].id;
+                        break;
+                    }
+                }
+                const query = "DELETE FROM department WHERE ?";
+                connection.query(query, { id: chosenDepartmentId }, (err, res) => {
+                    if (err) throw err;
+                    console.log("Department Removed");
+                    setTimeout(viewDepartments, 500);
+
+                });
+            });
+    });
+};
