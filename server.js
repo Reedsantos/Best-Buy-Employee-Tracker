@@ -70,6 +70,10 @@ function startPrompt() {
                     viewDepartments();
                     break;
 
+                case "Add Employee":
+                    addEmployee();
+                    break;
+
             }
         })
 };
@@ -235,7 +239,53 @@ function addEmployee() {
                             }
                         }
                         newEmployee.roleID = chosenRoleID;
-                    })
-            })
-        })
-};
+
+                        const query = `
+                    SELECT DISTINCT concat(manager.first_name, " ", manager.last_name) AS full_name, manager.id
+                    FROM employee
+                    LEFT JOIN employee AS manager ON manager.id = employee.manager_id;`;
+                        connection.query(query, (err, res) => {
+                            if (err) throw err;
+                            const managers = [];
+                            const managersNames = [];
+                            for (let i = 0; i < res.length; i++) {
+                                managersNames.push(res[i].full_name);
+                                managers.push({
+                                    id: res[i].id,
+                                    fullName: res[i].full_name
+                                });
+                            }
+                            inquirer
+                                .prompt({
+                                    type: "list",
+                                    name: "managerPromptChoice",
+                                    message: "Select Manager:",
+                                    choices: managersNames
+                                })
+                                .then(answer => {
+                                    const chosenManager = answer.managerPromptChoice;
+                                    let chosenManagerID;
+                                    for (let i = 0; i < managers.length; i++) {
+                                        if (managers[i].fullName === chosenManager) {
+                                            chosenManagerID = managers[i].id;
+                                            break;
+                                        }
+                                    }
+                                    newEmployee.managerID = chosenManagerID;
+                                    const query = "INSERT INTO employee SET ?";
+                                    connection.query(query, {
+                                        first_name: newEmployee.firstName,
+                                        last_name: newEmployee.lastName,
+                                        role_id: newEmployee.roleID || 0,
+                                        manager_id: newEmployee.managerID || 0
+                                    }, (err, res) => {
+                                        if (err) throw err;
+                                        console.log("Employee Added");
+                                        setTimeout(viewEmployees, 500);
+                                    });
+                                });
+                        });
+                    });
+            });
+        });
+}
